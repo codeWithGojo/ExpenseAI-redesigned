@@ -30,6 +30,8 @@ export default function Login({ onAuth }) {
         <h1 className="text-3xl font-bold tracking-tight">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
         <p className="mt-2 text-sm text-slate-500">{mode === "login" ? "Sign in to view your financial overview." : "Start building a clearer picture of your money."}</p>
 
+        {mode === "login" && <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><strong>Try the portfolio demo</strong><br/>Email: demo@expenseai.app<br/>Password: demo1234</div>}
+
         <div className="mt-8 space-y-4">
 
         {mode === "register" && (
@@ -67,7 +69,7 @@ export default function Login({ onAuth }) {
           onClick={() => setMode(mode === "login" ? "register" : "login")}
         >
           {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
-        </button></div>
+        </button><p className="text-center text-xs leading-5 text-slate-400">Demo data is stored only in this browser and can be cleared with your browser storage.</p></div>
       </form>
       </div>
     </div>
