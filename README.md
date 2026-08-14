@@ -18,6 +18,8 @@ A full-stack expense tracker with an AI financial coach.
 
 ## Current limitations
 
+- The hosted Vercel portfolio build runs in transparent demo mode: accounts and finance records are stored only in the visitor's browser (`localStorage`). Demo login: `demo@expenseai.app` / `demo1234`.
+- The Express/Prisma backend requires a persistent production database and environment variables before it can replace demo mode online.
 - The “AI” coach is deterministic rules, not a generative model. It cannot reason beyond stored totals, categories and goals.
 - Totals are lifetime totals; monthly/date-range reporting is not implemented yet.
 - SQLite and floating-point money values are suitable for an MVP, not accounting-grade production. Use Postgres and integer minor units/Decimal before handling real money.
