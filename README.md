@@ -1,44 +1,46 @@
 # ExpenseAI
 
-A full-stack expense tracker with an AI financial coach.
+ExpenseAI is a Naira-first expense dashboard designed to make category insights actionable, not decorative.
 
-- **Backend:** Node.js + Express + Prisma (SQLite locally, Postgres-ready for production) + JWT auth
-- **Frontend:** React + Vite + Tailwind + Recharts
-- **AI:** Rule-based coach out of the box (no API key needed) — swap in a real LLM call in `backend/src/routes/ai.js` when ready
+**Live interactive preview:** https://expense-ai-redesigned.vercel.app/
 
-## Capabilities
+## Responsive product flow
 
-- Register / login (JWT)
-- Add, edit, delete, search and categorise expenses
-- Track income and calculate a live net balance
-- Create savings goals and visualise progress
-- Responsive white-theme finance dashboard with category analytics
-- Rule-based financial insights and simple question matching
-- Per-user data isolation through JWT-protected API routes
+1. **Home** — profile and notifications, dark balance card, six-month spending analytics, and recent transactions.
+2. **Expenses** — month and weekday selector, salary vs. expense summaries, and category budget progress.
+3. **Total expense** — monthly spending headline, percentage of income used, category donut chart, legend, and totals.
 
-## Current limitations
+The interface uses a purple primary palette, coral/orange accents, white cards, a light-gray canvas, and rounded responsive surfaces throughout. Currency stays in Nigerian Naira.
 
-- The hosted Vercel portfolio build runs in transparent demo mode: accounts and finance records are stored only in the visitor's browser (`localStorage`). Demo login: `demo@expenseai.app` / `demo1234`.
-- The Express/Prisma backend requires a persistent production database and environment variables before it can replace demo mode online.
-- The “AI” coach is deterministic rules, not a generative model. It cannot reason beyond stored totals, categories and goals.
-- Totals are lifetime totals; monthly/date-range reporting is not implemented yet.
-- SQLite and floating-point money values are suitable for an MVP, not accounting-grade production. Use Postgres and integer minor units/Decimal before handling real money.
-- There is no password reset, email verification, refresh-token flow or multi-factor authentication.
-- There are no bank connections, transaction imports, recurring transactions, budgets, notifications or multi-currency conversion.
-- The app has no automated backend test suite yet and does not provide financial advice or predictions.
+## Why I built it
 
-## Fixes in this revision
+Most budgeting apps I tried showed where money went after the month ended, but did not explain what to do next—especially for everyday Naira spending. ExpenseAI fills that gap by surfacing patterns early and turning them into simple, useful guidance.
 
-- Added strict positive-number and valid-date checks for expenses, income and goals.
-- Normalised login/register emails and added a minimum password length.
-- Added expired-session handling, visible loading/error states and usable empty states.
-- Exposed income and savings goals in the dashboard instead of leaving backend features hidden.
-- Added server configuration guards, request-size limits and a generic error response.
-- Rebuilt the frontend as a responsive white finance interface with accessible forms and Nigerian Naira formatting.
+## Built / Learned / Challenge
+
+- **Built:** JWT authentication and per-user isolation in the Express/Prisma API.
+- **Learned:** Rule-based financial insight logic can be genuinely useful when it connects budget limits, category spikes, and recurring payments to clear next actions.
+- **Challenge:** Category breakdowns are easy to make attractive; the harder work is choosing comparisons that help someone change a spending habit.
+
+## Stack
+
+- **Frontend:** React, Vite, responsive CSS
+- **Backend:** Node.js, Express, Prisma
+- **Authentication:** JWT
+- **Insights:** Rule-based financial coach
 
 ## Run locally
 
-**Backend**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs at http://localhost:5173.
+
+For the API:
+
 ```bash
 cd backend
 cp .env.example .env
@@ -46,39 +48,9 @@ npm install
 npx prisma migrate dev --name init
 npm run dev
 ```
-Runs on http://localhost:5000
 
-**Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Runs on http://localhost:5173 (proxies `/api` to the backend)
+The API runs at http://localhost:5000.
 
-## Run with Docker
+## Deployment note
 
-```bash
-docker-compose up --build
-```
-
-## Push to your own GitHub repo
-
-From the project root:
-
-```bash
-git init
-git add .
-git commit -m "Initial ExpenseAI build"
-git branch -M main
-git remote add origin YOUR_GITHUB_REPO_URL
-git push -u origin main
-```
-
-## Roadmap (next phases)
-
-- Swap SQLite → Postgres for production (`schema.prisma` provider)
-- Replace rule-based AI with a real LLM call (OpenAI/Anthropic) in `ai.js`
-- Add fraud/anomaly detection on expenses
-- Add recurring expenses + budgets
-- Add tests + deploy pipeline (Railway/Render/Vercel)
+The public Vercel experience is an interactive frontend showcase. The repository also contains the authenticated backend; connect it to a persistent production database and environment variables before using real financial data.
