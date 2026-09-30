@@ -1,56 +1,31 @@
-# ExpenseAI
+# ExpenseAI business pilot
 
-ExpenseAI is a Naira-first expense dashboard designed to make category insights actionable, not decorative.
+A private Naira-first ledger for a small business, with transport-company fields.
 
-**Live interactive preview:** https://expense-ai-redesigned.vercel.app/
+## Working flows
 
-## Responsive product flow
+- Account-scoped business name, income, expenses and category budgets stored in D1.
+- Integer kobo amounts, transaction dates, vehicle and trip references.
+- Monthly totals and six-month expense history derived from saved records.
+- Search, date and vehicle filters; CSV export follows those filters and escapes spreadsheet formulas.
+- Validation, retry-safe transaction references, soft removal and recoverable errors.
+- New accounts start empty. No sample financial figures or browser-stored records.
 
-1. **Home** — profile and notifications, dark balance card, six-month spending analytics, and recent transactions.
-2. **Expenses** — month and weekday selector, salary vs. expense summaries, and category budget progress.
-3. **Total expense** — monthly spending headline, percentage of income used, category donut chart, legend, and totals.
+## Access and scope
 
-The interface uses a purple primary palette, coral/orange accents, white cards, a light-gray canvas, and rounded responsive surfaces throughout. Currency stays in Nigerian Naira.
+This is the existing owner-private Sites deployment. The dispatcher supplies the authenticated user ID; every read and write is scoped to it. An API request without a user identity receives 401. Origin checks protect write requests. A business currently belongs to one signed-in account; shared staff roles, receipt uploads and billing are not implemented. Insights are deterministic descriptions of recorded activity, not a generative AI service or bank integration.
 
-## Why I built it
+The separate public Vercel showcase and its Express backend are not replaced by this checkout.
 
-Most budgeting apps I tried showed where money went after the month ended, but did not explain what to do next—especially for everyday Naira spending. ExpenseAI fills that gap by surfacing patterns early and turning them into simple, useful guidance.
+## Development
 
-## Built / Learned / Challenge
+Keep `.openai/hosting.json` and its existing project ID. D1 is bound as `DB`. Add schema changes to `db/schema.ts`, generate migrations with `npm run db:generate`, and preserve applied migrations. The API is routed through `worker/expense-api.ts`.
 
-- **Built:** JWT authentication and per-user isolation in the Express/Prisma API.
-- **Learned:** Rule-based financial insight logic can be genuinely useful when it connects budget limits, category spikes, and recurring payments to clear next actions.
-- **Challenge:** Category breakdowns are easy to make attractive; the harder work is choosing comparisons that help someone change a spending habit.
-
-## Stack
-
-- **Frontend:** React, Vite, responsive CSS
-- **Backend:** Node.js, Express, Prisma
-- **Authentication:** JWT
-- **Insights:** Rule-based financial coach
-
-## Run locally
-
-```bash
-cd frontend
-npm install
-npm run dev
+```sh
+npm run install:ci
+node --test tests/records.test.mjs
+npx tsc --noEmit
+npm run build
 ```
 
-The frontend runs at http://localhost:5173.
-
-For the API:
-
-```bash
-cd backend
-cp .env.example .env
-npm install
-npx prisma migrate dev --name init
-npm run dev
-```
-
-The API runs at http://localhost:5000.
-
-## Deployment note
-
-The public Vercel experience is an interactive frontend showcase. The repository also contains the authenticated backend; connect it to a persistent production database and environment variables before using real financial data.
+The database tests use disposable on-disk SQLite records and cover reopen persistence, account isolation, month filtering, cents, budgets, duplicate requests, validation and removal. Cloudflare runtime declarations in `types/` were generated with the installed Wrangler version.

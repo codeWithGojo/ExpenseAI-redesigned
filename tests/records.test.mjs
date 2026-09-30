@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,mkdtempSync,rmSync,readdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {handleExpenseApi} from '../worker/expense-api.ts';
+const adapter=sqlite=>({prepare(sql){const statement=sqlite.prepare(sql);let values=[];return{bind(...v){values=v;return this;},async all(){return{results:statement.all(...values)};},async run(){return{meta:{changes:statement.run(...values).changes}};}};}});
+const req=(path,method='GET',body,owner='owner-a',extra={})=>new Request('https://expense.test'+path,{method,headers:{...(owner?{'oai-authenticated-user-id':owner,'oai-authenticated-user-email':'qa@example.test'}:{}),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
+test('ledger persists, isolates accounts, filters months, handles budgets and safely retries',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'expenseai-'));let sqlite=new DatabaseSync(join(dir,'records.sqlite'));for(const file of readdirSync(new URL('../drizzle/',import.meta.url)).filter(f=>f.endsWith('.sql')).sort())sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));let db=adapter(sqlite);
+ try{
+  assert.equal((await handleExpenseApi(req('/api/workspace', 'GET',undefined,null),db)).status,401);
+  assert.equal((await handleExpenseApi(req('/api/workspace'))).status,503);
+  const expense={id:crypto.randomUUID(),kind:'expense',amount:'12500.25',category:'Fuel',description:'Diesel',date:'2026-09-30',vehicle:'BUS-01',trip:'PH-Abuja'};
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',expense),db)).status,201);
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',expense),db)).status,200);
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',expense,'owner-b'),db)).status,409);
+  const income={...expense,id:crypto.randomUUID(),kind:'income',category:'Business income',amount:'50000',description:'Fares'};
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',income),db)).status,201);
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',{...expense,id:crypto.randomUUID(),date:'2026-02-30'}),db)).status,400);
+  assert.equal((await handleExpenseApi(req('/api/transactions','POST',{...expense,id:crypto.randomUUID(),amount:'1.001'}),db)).status,400);
+  assert.equal((await handleExpenseApi(req('/api/budgets','POST',{month:'2026-09',category:'Fuel',amount:'20000'},'owner-a',{origin:'https://other.test'}),db)).status,403);
+  for(const amount of ['20000','25000'])assert.equal((await handleExpenseApi(req('/api/budgets','POST',{month:'2026-09',category:'Fuel',amount}),db)).status,200);
+  await handleExpenseApi(req('/api/workspace','PUT',{businessName:'Pilot transport'}),db);
+  const goal={id:crypto.randomUUID(),name:'Maintenance reserve',target:'100000',saved:'25000'};
+  assert.equal((await handleExpenseApi(req('/api/goals','POST',goal),db)).status,201);
+  assert.equal((await handleExpenseApi(req('/api/goals','POST',goal),db)).status,200);
+  assert.equal((await handleExpenseApi(req('/api/goals','POST',goal,'owner-b'),db)).status,409);
+  assert.equal((await handleExpenseApi(req('/api/goals/'+goal.id,'PUT',{saved:'110000'}),db)).status,400);
+  assert.equal((await handleExpenseApi(req('/api/goals/'+goal.id,'PUT',{saved:'30000'},'owner-b'),db)).status,404);
+  assert.equal((await handleExpenseApi(req('/api/goals/'+goal.id,'PUT',{saved:'30000'}),db)).status,200);
+  assert.equal((await handleExpenseApi(req('/api/goals','POST',{...goal,id:crypto.randomUUID(),saved:'0.00'}),db)).status,201);
+  sqlite.close();sqlite=new DatabaseSync(join(dir,'records.sqlite'));db=adapter(sqlite);
+  const saved=await (await handleExpenseApi(req('/api/workspace?month=2026-09'),db)).json();
+  assert.equal(saved.goals.length,2);assert.equal(saved.goals.find(g=>g.id===goal.id).saved_kobo,3000000);assert.equal((await (await handleExpenseApi(req('/api/workspace?month=2026-09','GET',undefined,'owner-b'),db)).json()).goals.length,0);
+  assert.equal(saved.businessName,'Pilot transport');assert.equal(saved.transactions.length,2);assert.equal(saved.transactions.find(r=>r.id===expense.id).amount_kobo,1250025);assert.equal(saved.history[0].amount_kobo,1250025);assert.equal(saved.budgets.length,1);assert.equal(saved.budgets[0].amount_kobo,2500000);
+  assert.equal((await (await handleExpenseApi(req('/api/workspace?month=2026-10'),db)).json()).transactions.length,0);
+  assert.equal((await (await handleExpenseApi(req('/api/workspace?month=2026-09','GET',undefined,'owner-b'),db)).json()).transactions.length,0);
+  assert.equal((await handleExpenseApi(req('/api/transactions/'+expense.id,'DELETE',undefined,'owner-b'),db)).status,404);
+  assert.equal((await handleExpenseApi(req('/api/transactions/'+expense.id,'DELETE'),db)).status,200);
+  const removed=await (await handleExpenseApi(req('/api/workspace?month=2026-09'),db)).json();assert.equal(removed.transactions.length,1);assert.equal(removed.history.length,0);
+ }finally{sqlite.close();rmSync(dir,{recursive:true,force:true});}
+});
