@@ -7,7 +7,11 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// Render the current reporting month per request, rather than freezing it at build time.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://expense-ai-redesigned.vercel.app"),
   title: "ExpenseAI | Smarter Naira Spending",
   description: "A private, Naira-first expense tracker that turns everyday transactions into useful financial insights.",
   openGraph: {
