@@ -6,15 +6,15 @@ interface Statement {
   all(): Promise<{ results: Record<string, unknown>[] }>;
   run(): Promise<{ meta: { changes: number } }>;
 }
-const categories = ["Fuel", "Maintenance", "Driver allowance", "Tolls & parking", "Insurance", "Office", "Food & Drinks", "Transport", "Bills & Utilities", "Other"];
+export const categories = ["Fuel", "Maintenance", "Driver allowance", "Tolls & parking", "Insurance", "Office", "Food & Drinks", "Transport", "Bills & Utilities", "Other"];
 const json = (value: unknown, status = 200) => Response.json(value, {status, headers: {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}});
-const validMonth = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && Number(value.slice(0,4)) >= 2000 && Number(value.slice(0,4)) <= 2100;
-const validDate = (value: string) => {
+export const validMonth = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && Number(value.slice(0,4)) >= 2000 && Number(value.slice(0,4)) <= 2100;
+export const validDate = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !validMonth(value.slice(0,7))) return false;
   const parsed = new Date(`${value}T00:00:00Z`);
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10) === value;
 };
-function amount(value: unknown) {
+export function amount(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number") throw new Error("Enter a valid amount.");
   const text = String(value);
   if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error("Use a positive amount with at most two decimal places.");
@@ -22,12 +22,12 @@ function amount(value: unknown) {
   if (!Number.isSafeInteger(kobo) || kobo <= 0 || kobo > 100_000_000_000) throw new Error("Amount must be greater than zero and no more than ₦1 billion.");
   return kobo;
 }
-function bounded(value: unknown, max: number, required = false) {
+export function bounded(value: unknown, max: number, required = false) {
   const text = typeof value === "string" ? value.trim() : "";
   if (text.length > max || (required && !text)) throw new Error(`Enter ${required ? "a value" : "text"} of at most ${max} characters.`);
   return text;
 }
-function uuid(value: unknown) { return typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value); }
+export function uuid(value: unknown) { return typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value); }
 export async function handleExpenseApi(request: Request, db?: Database): Promise<Response> {
   const url = new URL(request.url);
   const owner = request.headers.get("oai-authenticated-user-id");

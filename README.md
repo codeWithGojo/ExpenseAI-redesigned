@@ -15,7 +15,7 @@ A private Naira-first ledger for a small business, with transport-company fields
 
 This is the existing owner-private Sites deployment. The dispatcher supplies the authenticated user ID; every read and write is scoped to it. An API request without a user identity receives 401. Origin checks protect write requests. A business currently belongs to one signed-in account; shared staff roles, receipt uploads and billing are not implemented. Insights are deterministic descriptions of recorded activity, not a generative AI service or bank integration.
 
-The separate public Vercel showcase and its Express backend are not replaced by this checkout.
+The public Vercel release uses the same dashboard with browser-only storage; the private Sites ledger retains account-scoped D1 storage.
 
 ## Development
 
@@ -29,3 +29,9 @@ npm run build
 ```
 
 The database tests use disposable on-disk SQLite records and cover reopen persistence, account isolation, month filtering, cents, budgets, duplicate requests, validation and removal. Cloudflare runtime declarations in `types/` were generated with the installed Wrangler version.
+
+## Public Vercel release
+
+The public Vercel build uses `NEXT_PUBLIC_STORAGE_MODE=browser`. New records are stored in IndexedDB on the visitor's browser, without a login. They do not sync across devices and clearing site data removes them. No private account records are included. Private Sites builds keep the existing identity-bound D1 API.
+
+The existing Vercel project uses the `frontend` root directory. That folder contains thin Next.js wrappers importing the shared application, so both deployments use the same dashboard source.

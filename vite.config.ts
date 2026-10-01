@@ -44,6 +44,7 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    define: { "process.env.NEXT_PUBLIC_STORAGE_MODE": JSON.stringify("account") },
     server: {
       host: "0.0.0.0",
       allowedHosts: ["terminal.local"],

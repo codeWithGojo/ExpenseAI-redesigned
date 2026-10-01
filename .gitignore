@@ -42,3 +42,7 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
+
+# Public Next.js wrapper build artifacts
+/frontend/node_modules
+/frontend/.next/
