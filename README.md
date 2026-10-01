@@ -34,4 +34,4 @@ The database tests use disposable on-disk SQLite records and cover reopen persis
 
 The public Vercel build uses `NEXT_PUBLIC_STORAGE_MODE=browser`. New records are stored in IndexedDB on the visitor's browser, without a login. They do not sync across devices and clearing site data removes them. No private account records are included. Private Sites builds keep the existing identity-bound D1 API.
 
-The existing Vercel project uses the `frontend` root directory. That folder contains thin Next.js wrappers importing the shared application, so both deployments use the same dashboard source.
+The existing Vercel project uses the `frontend` root directory. That folder is a self-contained public build generated from the canonical root application. Run `node scripts/sync-public.mjs` after editing the shared dashboard. Its dependencies and assets resolve inside the configured build root.
